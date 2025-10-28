@@ -55,4 +55,5 @@ backend/prisma/migrations/
 
 # 文档（保留部分）
 # 如需忽略特定文档，取消注释
-# docs/**/*.md
+docs/**/*.md
+backend/*
