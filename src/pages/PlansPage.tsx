@@ -201,10 +201,23 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
 
   const handleNavigation = (customer: Customer) => {
     if (customer.latitude && customer.longitude) {
+      // 使用经纬度导航（精确）
       const url = `https://www.google.com/maps/dir/?api=1&destination=${customer.latitude},${customer.longitude}`;
       window.open(url, '_blank');
+    } else if (customer.address) {
+      // 使用地址导航（如果地址可用）
+      // 尝试多个地图服务
+      const encodedAddress = encodeURIComponent(customer.address);
+      
+      // 优先使用高德地图（中国地区）
+      const amapUrl = `https://uri.amap.com/navigation?to=${encodedAddress}&mode=car&src=myapp`;
+      window.open(amapUrl, '_blank');
+      
+      // 备用：百度地图
+      // const baiduUrl = `https://api.map.baidu.com/marker?location=${encodedAddress}`;
+      // window.open(baiduUrl, '_blank');
     } else {
-      alert('客户位置信息不可用');
+      alert('客户位置信息不可用，请先添加客户地址');
     }
   };
 
