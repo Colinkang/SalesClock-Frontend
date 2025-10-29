@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, Camera, MapPin, Loader2 } from 'lucide-react';
 import { visitPlansApi } from '../lib/api';
+import SimpleMap from './SimpleMap';
 
 interface Customer {
   id: string;
@@ -242,13 +243,11 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
                       {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
                     </p>
                   </div>
-                  <div className="aspect-video bg-slate-200 rounded-lg overflow-hidden">
-                    <img
-                      src={`https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s+3b82f6(${location.lng},${location.lat})/${location.lng},${location.lat},15,0/400x300@2x?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw`}
-                      alt="Location Map"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                  <SimpleMap 
+                    latitude={location.lat} 
+                    longitude={location.lng}
+                    className="aspect-video"
+                  />
                 </div>
               ) : (
                 <button
