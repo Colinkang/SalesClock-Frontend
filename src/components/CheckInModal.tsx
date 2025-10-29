@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, Camera, MapPin, Loader2 } from 'lucide-react';
 import { visitPlansApi } from '../lib/api';
-import SimpleMap from './SimpleMap';
+import DraggableMap from './DraggableMap';
 
 interface Customer {
   id: string;
@@ -28,6 +28,7 @@ interface CheckInModalProps {
 
 export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: CheckInModalProps) {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [initialLocation, setInitialLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [photo, setPhoto] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -37,6 +38,7 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const streamRef = useRef<MediaStream | null>(null);
+  const maxDistanceMeters = 500;
 
   useEffect(() => {
     if (isOpen) {
@@ -52,10 +54,12 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setLocation({
+          const newLocation = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
-          });
+          };
+          setLocation(newLocation);
+          setInitialLocation(newLocation);
           setGettingLocation(false);
         },
         (error) => {
@@ -68,6 +72,10 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
       setGettingLocation(false);
       alert('浏览器不支持定位功能');
     }
+  };
+
+  const handleLocationChange = (lat: number, lng: number) => {
+    setLocation({ lat, lng });
   };
 
   const startCamera = async () => {
@@ -235,7 +243,7 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
                   <Loader2 size={16} className="animate-spin mr-2" />
                   <span className="text-sm">正在获取位置...</span>
                 </div>
-              ) : location ? (
+              ) : location && initialLocation ? (
                 <div className="space-y-2">
                   <div className="flex items-start">
                     <MapPin size={16} className="text-blue-600 mt-0.5 mr-2 flex-shrink-0" />
@@ -243,10 +251,13 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
                       {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
                     </p>
                   </div>
-                  <SimpleMap 
-                    latitude={location.lat} 
+                  <DraggableMap
+                    latitude={location.lat}
                     longitude={location.lng}
-                    className="aspect-video"
+                    initialLat={initialLocation.lat}
+                    initialLng={initialLocation.lng}
+                    onLocationChange={handleLocationChange}
+                    maxDistanceMeters={maxDistanceMeters}
                   />
                 </div>
               ) : (
