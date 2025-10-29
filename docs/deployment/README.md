@@ -1,28 +1,27 @@
-# 部署文档
+# 🐳 Docker 部署
 
-## 🐳 Docker 部署
+## 🚀 快速启动
 
-### 快速开始
-1. **DOCKER_QUICKSTART.md** - 快速开始指南（推荐从这里开始）
-2. **DOCKER_DEPLOYMENT_GUIDE.md** - 详细部署文档
-3. **DOCKER_FILES_CREATED.md** - Docker 文件说明
+```bash
+# 使用快速启动脚本
+./docs/deployment/docker-start.sh
 
-### 部署文件
-- `Dockerfile` (前端)
-- `nginx.conf` (Nginx 配置)
-- `docker-compose.yml` (服务编排)
-- `docker-start.sh` (启动脚本)
+# 或手动启动
+docker-compose up -d
+```
 
-## 🚀 部署步骤
+## 📋 服务说明
 
-1. 阅读 `DOCKER_QUICKSTART.md`
-2. 运行 `./docker-start.sh`
-3. 访问 http://localhost
+- **frontend** - React 前端 (Nginx)
+- **backend** - Express API 服务
+- **db** - PostgreSQL 数据库
 
-## 📋 相关文件
+## 🔧 配置
 
-- 前端 Dockerfile: `../Dockerfile`
-- Nginx 配置: `../nginx.conf`
-- Docker Compose: `../docker-compose.yml`
-- 启动脚本: `../docker-start.sh`
+详细配置说明：[DOCKER_DEPLOYMENT_GUIDE.md](DOCKER_DEPLOYMENT_GUIDE.md)
 
+## 🌐 访问地址
+
+- 前端: http://localhost:80
+- 后端: http://localhost:3001
+- 数据库: localhost:5432

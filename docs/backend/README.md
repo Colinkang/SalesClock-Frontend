@@ -1,22 +1,41 @@
-# 后端文档
+# ⚙️ 后端 API
 
-## 📚 主要文档
+## 🚀 快速开始
 
-### 核心文档
-- **API_DOCUMENTATION.md** - 完整的 API 接口文档（28个接口）
-- **MIGRATION_GUIDE.md** - 数据库迁移指南
-- **DATABASE_SEED_GUIDE.md** - 数据库种子数据指南
-- **QUICK_REFERENCE.md** - API 快速参考
+```bash
+cd backend
+npm install
+npm run dev
+```
 
-### 状态文档
-- **BACKEND_READY.md** - 后端准备状态
-- **BACKEND_COMPLETE.md** - 后端完成总结
-- **DATABASE_INIT_COMPLETE.md** - 数据库初始化完成
+## 📋 API 接口
 
-## 🎯 查看重点
+详细接口文档：[API_ROUTES_GUIDE.md](API_ROUTES_GUIDE.md)
 
-- API 接口调用方法
-- 数据库 schema 和关系
-- 认证和权限系统
-- 数据迁移步骤
+### 主要路由
+- `/api/auth` - 认证相关
+- `/api/customers` - 客户管理
+- `/api/visit-plans` - 拜访计划
+- `/api/visit-reports` - 拜访报告
+- `/api/articles` - 文章管理
+- `/api/invitations` - 邀请管理
 
+## 🗄️ 数据库
+
+**技术栈**: PostgreSQL + Prisma
+
+**快速参考**: [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
+
+### 主要表结构
+- `users` - 用户信息
+- `customers` - 客户信息
+- `visit_plans` - 拜访计划
+- `visit_reports` - 拜访报告
+- `articles` - 文章内容
+- `invitations` - 邀请记录
+
+## 🔐 认证
+
+- JWT Token 认证
+- 密码加密存储
+- 邀请制注册

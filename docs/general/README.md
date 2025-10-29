@@ -1,29 +1,33 @@
-# 通用文档
+# 📋 通用文档
 
-## 📖 项目相关
+## 🎯 项目概述
 
-### 项目总结
-- **PROJECT_COMPLETE.md** - 项目完成总结
+**拜访管理系统** - 基于 React + Express 的客户拜访管理平台
 
-### 迁移指南
-- **MIGRATION_GUIDE.md** - 从 Supabase 迁移指南
-- **DOCUMENTATION_SUMMARY.md** - 文档总结
+## 🚀 快速开始
 
-### 测试文档
-- **TESTING_GUIDE.md** - 完整测试指南
-- **START_TESTING.md** - 开始测试
+### 开发环境
+```bash
+# 前端
+npm run dev
 
-### 网络配置
-- **NETWORK_CONFIG_COMPLETE.md** - 网络配置完成
-- **NETWORK_ACCESS_GUIDE.md** - 网络访问指南
+# 后端
+cd backend && npm run dev
+```
 
-### 问题修复
-- **CALENDAR_FIX_COMPLETE.md** - 日历修复记录
+### 生产部署
+```bash
+docker-compose up -d
+```
 
-## 🎯 查看重点
+## 📚 主要文档
 
-- 项目整体架构和状态
-- 测试方法和步骤
-- 网络配置和故障排查
-- 常见问题解决方案
+- [Git 设置完成](GIT_SETUP_COMPLETE.md) - 版本控制配置
+- [项目 README](../README.md) - 项目总览
 
+## 🔧 技术栈
+
+- **前端**: React + TypeScript + Tailwind CSS
+- **后端**: Node.js + Express + Prisma
+- **数据库**: PostgreSQL
+- **部署**: Docker + Docker Compose

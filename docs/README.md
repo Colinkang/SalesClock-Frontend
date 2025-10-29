@@ -1,93 +1,54 @@
 # 📚 项目文档
 
-## 📁 文档分类
+## 🚀 快速开始
 
-### 🎨 前端文档 (`docs/frontend/`)
-包含前端相关的所有更新和迁移记录：
-- 组件更新记录
-- API 迁移日志
-- 页面更新状态
-- 前端配置指南
+### 开发环境启动
+```bash
+# 前端
+npm run dev
 
-### ⚙️ 后端文档 (`docs/backend/`)
-包含后端相关的所有文档：
-- API 接口文档
-- 数据库迁移指南
-- 种子数据指南
-- 快速参考
+# 后端
+cd backend && npm run dev
+```
 
-### 🚀 部署文档 (`docs/deployment/`)
-Docker 部署相关文档：
-- Docker 快速开始
-- 部署指南
-- Docker 配置文件说明
+### Docker 部署
+```bash
+# 使用 Docker Compose
+docker-compose up -d
 
-### 📖 通用文档 (`docs/general/`)
-项目和功能说明：
-- 项目总结
-- 迁移指南
-- 网络配置
-- 测试指南
+# 或使用快速启动脚本
+./docs/deployment/docker-start.sh
+```
 
-## 🗂️ 文档列表
+## 📖 主要文档
 
-### 前端
-- `FRONTEND_MIGRATION_COMPLETE.md` - 前端迁移完成总结
-- `ALL_COMPONENTS_UPDATED.md` - 所有组件更新记录
-- `ARTICLESPAGE_UPDATE_COMPLETE.md` - 文章页面更新
-- `PLANSPAGE_UPDATE_COMPLETE.md` - 计划页面更新
-- `CUSTOMERSPAGE_UPDATE_COMPLETE.md` - 客户页面更新
-- `LOGINPAGE_UPDATE_SUMMARY.md` - 登录页面更新
-- `FRONTEND_UPDATE_GUIDE.md` - 前端更新指南
-- `FRONTEND_UPDATE_STATUS.md` - 前端更新状态
-- `FRONTEND_FIXED.md` - 前端修复记录
-- `QUICK_FRONTEND_UPDATE.md` - 快速更新指南
-- `PLANSPAGE_UPDATE_STATUS.md` - 计划页面更新状态
-- `CUSTOMERSPAGE_UPDATE_STATUS.md` - 客户页面更新状态
+- [后端 API 文档](backend/API_ROUTES_GUIDE.md) - 完整的 API 接口说明
+- [数据库快速参考](backend/QUICK_REFERENCE.md) - 数据库操作指南
+- [Docker 部署指南](deployment/DOCKER_DEPLOYMENT_GUIDE.md) - 容器化部署
+- [地图功能修复](frontend/MAP_DISPLAY_FIX.md) - 签到地图显示解决方案
+- [Git 设置完成](general/GIT_SETUP_COMPLETE.md) - 版本控制配置
 
-### 后端
-- `BACKEND_READY.md` - 后端准备状态
-- `BACKEND_COMPLETE.md` - 后端完成总结
-- `DATABASE_INIT_COMPLETE.md` - 数据库初始化完成
-- `../backend/API_DOCUMENTATION.md` - API 接口文档
-- `../backend/MIGRATION_GUIDE.md` - 数据库迁移指南
-- `../backend/DATABASE_SEED_GUIDE.md` - 数据库种子指南
-- `../backend/QUICK_REFERENCE.md` - 快速参考
+## 🏗️ 项目结构
 
-### 部署
-- `DOCKER_DEPLOYMENT_GUIDE.md` - Docker 部署指南
-- `DOCKER_QUICKSTART.md` - Docker 快速开始
-- `DOCKER_FILES_CREATED.md` - Docker 文件说明
+```
+├── src/                 # 前端源码
+├── backend/            # 后端 API
+├── docs/              # 项目文档
+├── docker-compose.yml # Docker 编排
+└── Dockerfile         # 前端容器
+```
 
-### 通用
-- `PROJECT_COMPLETE.md` - 项目完成总结
-- `NETWORK_CONFIG_COMPLETE.md` - 网络配置完成
-- `NETWORK_ACCESS_GUIDE.md` - 网络访问指南
-- `CALENDAR_FIX_COMPLETE.md` - 日历修复记录
-- `TESTING_GUIDE.md` - 测试指南
-- `START_TESTING.md` - 开始测试
-- `MIGRATION_GUIDE.md` - Supabase 迁移指南
-- `DOCUMENTATION_SUMMARY.md` - 文档总结
+## 🔧 技术栈
 
-## 📋 快速查找
-
-### 我想了解...
-- **项目整体情况** → `docs/general/PROJECT_COMPLETE.md`
-- **如何测试** → `docs/general/TESTING_GUIDE.md`
-- **如何部署** → `docs/deployment/DOCKER_QUICKSTART.md`
-- **API 接口** → `backend/API_DOCUMENTATION.md`
-- **前端迁移** → `docs/frontend/FRONTEND_MIGRATION_COMPLETE.md`
-- **数据库配置** → `backend/MIGRATION_GUIDE.md`
-- **网络问题** → `docs/general/NETWORK_ACCESS_GUIDE.md`
-
-## 🚀 新手上路
-
-1. 阅读 `README.md`（项目根目录）
-2. 查看 `docs/general/PROJECT_COMPLETE.md`
-3. 阅读 `docs/deployment/DOCKER_QUICKSTART.md`
-4. 开始使用！
+- **前端**: React + TypeScript + Tailwind CSS
+- **后端**: Node.js + Express + Prisma
+- **数据库**: PostgreSQL
+- **部署**: Docker + Docker Compose
+- **地图**: 高德地图 + 多服务备用
 
 ## 📝 更新日志
 
-所有更新记录都按模块分类存放在对应文件夹中，便于查找和维护。
-
+- ✅ 完成 Supabase 到 Express 迁移
+- ✅ 实现签到地图显示
+- ✅ 添加 Docker 部署支持
+- ✅ 精简项目文档结构
