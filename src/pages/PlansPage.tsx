@@ -35,6 +35,8 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
   const [checkInModalOpen, setCheckInModalOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [selectedVisit, setSelectedVisit] = useState<VisitPlan | null>(null);
+  const [navModalOpen, setNavModalOpen] = useState(false);
+  const [navCustomer, setNavCustomer] = useState<Customer | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -199,26 +201,37 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
     window.location.href = `tel:${phone}`;
   };
 
-  const handleNavigation = (customer: Customer) => {
-    if (customer.latitude && customer.longitude) {
-      // 使用经纬度导航（精确）
-      const url = `https://www.google.com/maps/dir/?api=1&destination=${customer.latitude},${customer.longitude}`;
-      window.open(url, '_blank');
-    } else if (customer.address) {
-      // 使用地址导航（如果地址可用）
-      // 尝试多个地图服务
-      const encodedAddress = encodeURIComponent(customer.address);
-      
-      // 优先使用高德地图（中国地区）
-      const amapUrl = `https://uri.amap.com/navigation?to=${encodedAddress}&mode=car&src=myapp`;
-      window.open(amapUrl, '_blank');
-      
-      // 备用：百度地图
-      // const baiduUrl = `https://api.map.baidu.com/marker?location=${encodedAddress}`;
-      // window.open(baiduUrl, '_blank');
-    } else {
+  const openNavChooser = (customer: Customer) => {
+    if (!customer.address && !(customer.latitude && customer.longitude)) {
       alert('客户位置信息不可用，请先添加客户地址');
+      return;
     }
+    setNavCustomer(customer);
+    setNavModalOpen(true);
+  };
+
+  const buildMapUrls = (customer: Customer) => {
+    const hasCoords = !!(customer.latitude && customer.longitude);
+    const name = encodeURIComponent(customer.name || '目的地');
+    const address = customer.address ? encodeURIComponent(customer.address) : '';
+    const lat = customer.latitude;
+    const lng = customer.longitude;
+
+    if (hasCoords) {
+      return {
+        amap: `https://uri.amap.com/navigation?to=${lng},${lat},${name}&mode=car&src=myapp`,
+        baidu: `https://api.map.baidu.com/direction?destination=${lat},${lng}&mode=driving&output=html`,
+        google: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`,
+        apple: `https://maps.apple.com/?daddr=${lat},${lng}&q=${name}`,
+      };
+    }
+
+    return {
+      amap: `https://uri.amap.com/search?query=${address}&src=myapp`,
+      baidu: `https://api.map.baidu.com/geocoder?address=${address}&output=html`,
+      google: `https://www.google.com/maps/dir/?api=1&destination=${address}&travelmode=driving`,
+      apple: `https://maps.apple.com/?daddr=${address}&q=${name}`,
+    };
   };
 
   const handleWriteReport = (visit: VisitPlan) => {
@@ -396,7 +409,7 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
           </button>
 
           <button
-            onClick={() => handleNavigation(visit.customers)}
+            onClick={() => openNavChooser(visit.customers)}
             className="flex flex-col items-center justify-center py-3 px-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 active:scale-95 transition-all duration-200"
           >
             <Navigation size={20} strokeWidth={2} />
@@ -648,6 +661,72 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
             }}
           />
         </>
+      )}
+
+      {/* 地图选择器 */}
+      {navModalOpen && navCustomer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+              <h3 className="text-lg font-bold text-slate-800">选择地图</h3>
+              <button
+                onClick={() => setNavModalOpen(false)}
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 space-y-3">
+              <div className="text-sm text-slate-600">
+                目的地：
+                <span className="font-medium text-slate-800"> {navCustomer.name}</span>
+                {navCustomer.address && (
+                  <>
+                    <span className="mx-1">·</span>
+                    <span>{navCustomer.address}</span>
+                  </>
+                )}
+              </div>
+              {(() => {
+                const urls = buildMapUrls(navCustomer);
+                return (
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => { window.open(urls.amap, '_blank'); setNavModalOpen(false); }}
+                      className="px-4 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all text-sm font-medium"
+                    >
+                      高德地图
+                    </button>
+                    <button
+                      onClick={() => { window.open(urls.baidu, '_blank'); setNavModalOpen(false); }}
+                      className="px-4 py-3 rounded-xl bg-amber-600 text-white hover:bg-amber-700 active:scale-95 transition-all text-sm font-medium"
+                    >
+                      百度地图
+                    </button>
+                    <button
+                      onClick={() => { window.open(urls.google, '_blank'); setNavModalOpen(false); }}
+                      className="px-4 py-3 rounded-xl bg-slate-800 text-white hover:bg-slate-900 active:scale-95 transition-all text-sm font-medium"
+                    >
+                      Google 地图
+                    </button>
+                    <button
+                      onClick={() => { window.open(urls.apple, '_blank'); setNavModalOpen(false); }}
+                      className="px-4 py-3 rounded-xl bg-slate-100 text-slate-800 border border-slate-200 hover:bg-slate-200 active:scale-95 transition-all text-sm font-medium"
+                    >
+                      Apple 地图
+                    </button>
+                  </div>
+                );
+              })()}
+              <button
+                onClick={() => setNavModalOpen(false)}
+                className="w-full mt-2 px-4 py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 active:scale-95 transition-all text-sm"
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* 添加计划模态框 */}
