@@ -208,17 +208,28 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
       return;
     }
     const name = encodeURIComponent(customer.name || '目的地');
-    let scheme = '';
-    if (customer.latitude && customer.longitude) {
-      // 兼容优先级：高德 > 百度 > 苹果 > geo(Android)
-      // 高德
-      scheme = `amapuri://route/plan/?dlat=${customer.latitude}&dlon=${customer.longitude}&dname=${name}&dev=0&t=0`;
+    const lat = customer.latitude, lng = customer.longitude;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    let href = '';
+    if (lat && lng) {
+      if (isIOS) {
+        href = `maps://?daddr=${lat},${lng}&q=${name}`;
+      } else if (isAndroid) {
+        href = `geo:${lat},${lng}?q=${lat},${lng}(${name})`;
+      } else {
+        href = `https://maps.google.com/maps?daddr=${lat},${lng}`;
+      }
     } else if (customer.address) {
-      // 若无坐标用高德Web（不再弹窗选择map）
-      scheme = `https://uri.amap.com/search?query=${encodeURIComponent(customer.address)}&src=myapp`;
+      if (isIOS) {
+        href = `maps://?daddr=${encodeURIComponent(customer.address)}`;
+      } else if (isAndroid) {
+        href = `geo:0,0?q=${encodeURIComponent(customer.address)}(${name})`;
+      } else {
+        href = `https://maps.google.com/maps?daddr=${encodeURIComponent(customer.address)}`;
+      }
     }
-    // 直接跳转
-    window.location.href = scheme;
+    window.location.href = href;
   };
 
   const handleWriteReport = (visit: VisitPlan) => {
