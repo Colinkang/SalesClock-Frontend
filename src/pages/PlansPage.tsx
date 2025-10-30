@@ -218,19 +218,45 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
       const lat = customer.latitude as number;
       const lng = customer.longitude as number;
       return {
-        amap: `https://uri.amap.com/navigation?to=${lng},${lat},${name}&mode=car&src=myapp`,
-        baidu: `https://api.map.baidu.com/direction?destination=${lat},${lng}&mode=driving&output=html`,
-        google: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`,
-        apple: `https://maps.apple.com/?daddr=${lat},${lng}&q=${name}`,
+        amap: {
+          scheme: `amapuri://route/plan/?dlat=${lat}&dlon=${lng}&dname=${name}&dev=0&t=0`,
+          web: `https://uri.amap.com/navigation?to=${lng},${lat},${name}&mode=car&src=myapp`,
+        },
+        baidu: {
+          scheme: `baidumap://map/direction?destination=name:${name}|latlng:${lat},${lng}&mode=driving`,
+          web: `https://api.map.baidu.com/direction?destination=${lat},${lng}&mode=driving&output=html`,
+        },
+        google: {
+          scheme: `geo:${lat},${lng}?q=${lat},${lng}(${name})`,
+          web: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`,
+        },
+        apple: {
+          scheme: `maps://?daddr=${lat},${lng}`,
+          web: `https://maps.apple.com/?daddr=${lat},${lng}&q=${name}`,
+        },
       };
     }
     const addr = encodeURIComponent(customer.address as string);
     return {
-      amap: `https://uri.amap.com/search?query=${addr}&src=myapp`,
-      baidu: `https://api.map.baidu.com/geocoder?address=${addr}&output=html`,
-      google: `https://www.google.com/maps/dir/?api=1&destination=${addr}&travelmode=driving`,
-      apple: `https://maps.apple.com/?daddr=${addr}&q=${name}`,
+      amap: { scheme: '', web: `https://uri.amap.com/search?query=${addr}&src=myapp` },
+      baidu: { scheme:'', web: `https://api.map.baidu.com/geocoder?address=${addr}&output=html` },
+      google: { scheme:'', web: `https://www.google.com/maps/dir/?api=1&destination=${addr}&travelmode=driving` },
+      apple: { scheme:'', web: `https://maps.apple.com/?daddr=${addr}&q=${name}` },
     };
+  };
+
+  // 新方法，优先尝试scheme，失败则fallback
+  const startMapApp = (option:{scheme:string, web:string}) => {
+    if (option.scheme) {
+      // 先尝试scheme
+      window.location.href = option.scheme;
+      setTimeout(() => {
+        window.open(option.web,"_blank");
+      }, 800); // 部分webview成功跳app会自动cancel setTimeout
+    } else {
+      window.open(option.web, "_blank");
+    }
+    setNavModalOpen(false);
   };
 
   const handleWriteReport = (visit: VisitPlan) => {
@@ -666,10 +692,10 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
                 const urls = getMapUrls(navCustomer);
                 return (
                   <>
-                  <button onClick={()=>{window.open(urls.amap,'_blank');setNavModalOpen(false);}} className="w-[80%] py-3 rounded-xl bg-blue-600 text-white text-lg font-semibold hover:bg-blue-700">高德地图</button>
-                  <button onClick={()=>{window.open(urls.baidu,'_blank');setNavModalOpen(false);}} className="w-[80%] py-3 rounded-xl bg-yellow-500 text-white text-lg font-semibold hover:bg-yellow-600">百度地图</button>
-                  <button onClick={()=>{window.open(urls.google,'_blank');setNavModalOpen(false);}} className="w-[80%] py-3 rounded-xl bg-slate-800 text-white text-lg font-semibold hover:bg-slate-900">Google地图</button>
-                  <button onClick={()=>{window.open(urls.apple,'_blank');setNavModalOpen(false);}} className="w-[80%] py-3 rounded-xl bg-slate-100 text-slate-800 border border-slate-200 text-lg font-semibold hover:bg-slate-200">Apple地图</button>
+                  <button onClick={()=>startMapApp(urls.amap)} className="w-[80%] py-3 rounded-xl bg-blue-600 text-white text-lg font-semibold hover:bg-blue-700">高德地图</button>
+                  <button onClick={()=>startMapApp(urls.baidu)} className="w-[80%] py-3 rounded-xl bg-yellow-500 text-white text-lg font-semibold hover:bg-yellow-600">百度地图</button>
+                  <button onClick={()=>startMapApp(urls.google)} className="w-[80%] py-3 rounded-xl bg-slate-800 text-white text-lg font-semibold hover:bg-slate-900">Google地图</button>
+                  <button onClick={()=>startMapApp(urls.apple)} className="w-[80%] py-3 rounded-xl bg-slate-100 text-slate-800 border border-slate-200 text-lg font-semibold hover:bg-slate-200">Apple地图</button>
                   </>
                 );
               })()}
