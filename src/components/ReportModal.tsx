@@ -103,11 +103,10 @@ export default function ReportModal({ isOpen, onClose, visit, onSuccess }: Repor
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* 开始时间/结束时间上下分两行展示，不用grid */}
+          <div className="space-y-5">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                开始时间
-              </label>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">开始时间</label>
               <input
                 type="datetime-local"
                 value={startTime}
@@ -116,9 +115,7 @@ export default function ReportModal({ isOpen, onClose, visit, onSuccess }: Repor
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                结束时间
-              </label>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">结束时间</label>
               <input
                 type="datetime-local"
                 value={endTime}
