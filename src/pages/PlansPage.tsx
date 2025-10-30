@@ -47,6 +47,8 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [monthVisits, setMonthVisits] = useState<VisitPlan[]>([]);
+  const [navModalOpen, setNavModalOpen] = useState(false);
+  const [navCustomer, setNavCustomer] = useState<Customer | null>(null);
 
   useEffect(() => {
     loadCustomers();
@@ -200,58 +202,35 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
     window.location.href = `tel:${phone}`;
   };
 
-  const openSystemNavigation = (customer: Customer) => {
-    const name = encodeURIComponent(customer.name || '目的地');
-    const hasCoords = !!(customer.latitude && customer.longitude);
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isAndroid = /Android/.test(navigator.userAgent);
-
-    if (!hasCoords && !customer.address) {
-      alert('客户位置信息不可用，请先添加客户地址');
+  const handleNavModal = (customer: Customer) => {
+    if (!customer.latitude && !customer.address) {
+      alert('客户位置信息不可用，请先添加地址/坐标');
       return;
     }
+    setNavCustomer(customer);
+    setNavModalOpen(true);
+  };
 
+  const getMapUrls = (customer: Customer) => {
+    const name = encodeURIComponent(customer.name || '目的地');
+    const hasCoords = !!(customer.latitude && customer.longitude);
     if (hasCoords) {
       const lat = customer.latitude as number;
       const lng = customer.longitude as number;
-      const appleUrl = `https://maps.apple.com/?daddr=${lat},${lng}&q=${name}`;
-      const androidGeo = `geo:${lat},${lng}?q=${lat},${lng}(${name})`;
-      const googleWeb = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
-
-      if (isIOS) {
-        window.location.href = appleUrl;
-        return;
-      }
-      if (isAndroid) {
-        try {
-          window.location.href = androidGeo;
-        } catch (_e) {
-          window.open(googleWeb, '_blank');
-        }
-        return;
-      }
-      window.open(googleWeb, '_blank');
-      return;
+      return {
+        amap: `https://uri.amap.com/navigation?to=${lng},${lat},${name}&mode=car&src=myapp`,
+        baidu: `https://api.map.baidu.com/direction?destination=${lat},${lng}&mode=driving&output=html`,
+        google: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`,
+        apple: `https://maps.apple.com/?daddr=${lat},${lng}&q=${name}`,
+      };
     }
-
     const addr = encodeURIComponent(customer.address as string);
-    const appleUrl = `https://maps.apple.com/?daddr=${addr}&q=${name}`;
-    const androidGeo = `geo:0,0?q=${addr}(${name})`;
-    const googleWeb = `https://www.google.com/maps/dir/?api=1&destination=${addr}&travelmode=driving`;
-
-    if (isIOS) {
-      window.location.href = appleUrl;
-      return;
-    }
-    if (isAndroid) {
-      try {
-        window.location.href = androidGeo;
-      } catch (_e) {
-        window.open(googleWeb, '_blank');
-      }
-      return;
-    }
-    window.open(googleWeb, '_blank');
+    return {
+      amap: `https://uri.amap.com/search?query=${addr}&src=myapp`,
+      baidu: `https://api.map.baidu.com/geocoder?address=${addr}&output=html`,
+      google: `https://www.google.com/maps/dir/?api=1&destination=${addr}&travelmode=driving`,
+      apple: `https://maps.apple.com/?daddr=${addr}&q=${name}`,
+    };
   };
 
   const handleWriteReport = (visit: VisitPlan) => {
@@ -430,7 +409,7 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
           </button>
 
           <button
-            onClick={() => openSystemNavigation(visit.customers)}
+            onClick={() => handleNavModal(visit.customers)}
             className="flex flex-col items-center justify-center py-3 px-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 active:scale-95 transition-all duration-200"
           >
             <Navigation size={20} strokeWidth={2} />
@@ -675,8 +654,29 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
         </>
       )}
 
-      {/* 地图选择器 */}
-      
+      {navModalOpen && navCustomer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-xs w-full flex flex-col items-center">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 w-full">
+              <span className="text-lg font-bold text-slate-800">选择地图</span>
+              <button onClick={()=>setNavModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full"><X size={20}/></button>
+            </div>
+            <div className="py-4 w-full flex flex-col items-center gap-3">
+              {(() => {
+                const urls = getMapUrls(navCustomer);
+                return (
+                  <>
+                  <button onClick={()=>{window.open(urls.amap,'_blank');setNavModalOpen(false);}} className="w-[80%] py-3 rounded-xl bg-blue-600 text-white text-lg font-semibold hover:bg-blue-700">高德地图</button>
+                  <button onClick={()=>{window.open(urls.baidu,'_blank');setNavModalOpen(false);}} className="w-[80%] py-3 rounded-xl bg-yellow-500 text-white text-lg font-semibold hover:bg-yellow-600">百度地图</button>
+                  <button onClick={()=>{window.open(urls.google,'_blank');setNavModalOpen(false);}} className="w-[80%] py-3 rounded-xl bg-slate-800 text-white text-lg font-semibold hover:bg-slate-900">Google地图</button>
+                  <button onClick={()=>{window.open(urls.apple,'_blank');setNavModalOpen(false);}} className="w-[80%] py-3 rounded-xl bg-slate-100 text-slate-800 border border-slate-200 text-lg font-semibold hover:bg-slate-200">Apple地图</button>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 添加计划模态框 */}
       {showAddModal && (
