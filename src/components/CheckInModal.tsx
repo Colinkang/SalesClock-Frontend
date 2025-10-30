@@ -121,15 +121,44 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 改handleFileSelect为处理所有图片（拍照、选图）加水印与缩放
+  const processImage = (img: HTMLImageElement) => {
+    // 固定宽高，例如230x120px（16:9）
+    const width = 230;
+    const height = 120;
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(img, 0, 0, width, height);
+    // 水印信息
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('zh-CN');
+    const timeStr = now.toLocaleTimeString('zh-CN');
+    const name = visit.customers.name;
+    const coord = location ? `${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}` : '';
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0, height - 44, width, 44);
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 15px Arial';
+    ctx.fillText(name, 12, height - 22);
+    ctx.font = '12px Arial';
+    ctx.fillText(dateStr + ' ' + timeStr, 12, height - 8);
+    if(coord){ctx.font = '11px Arial'; ctx.fillText(coord, width/2, height - 8);}
+    return canvas.toDataURL('image/jpeg', 0.85);
+  }
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhoto(reader.result as string);
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const img = new window.Image();
+      img.onload = () => {
+        setPhoto(processImage(img));
       };
-      reader.readAsDataURL(file);
-    }
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
   };
 
   const showToast = (type: 'success'|'error', message: string) => {
@@ -211,41 +240,30 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
             placeholder="请填写签到备注（可选）"
           />
         </div>
+        {/* 图片区块 */}
         <div className="px-6 pb-1">
           <div className="text-slate-700 text-[15px] font-semibold mb-1">签到图片</div>
-          {!photo && !cameraActive && (
-            <div className="flex gap-2 mt-2">
-              <button
-                onClick={startCamera}
-                className="flex-1 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 flex items-center justify-center font-medium"
-              >
-                <Camera size={18} className="mr-2"/>相机拍照
-              </button>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="flex-1 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 font-medium"
-              >
-                + 相册图片
-              </button>
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
-            </div>
-          )}
-          {cameraActive && (
-            <div className="space-y-2 mt-2">
-              <video ref={videoRef} autoPlay playsInline className="w-full rounded-xl bg-black h-36 object-contain" />
-              <div className="flex gap-2">
-                <button onClick={capturePhoto} className="flex-1 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700">拍摄</button>
-                <button onClick={stopCamera} className="flex-1 py-2 bg-slate-200 text-slate-700 rounded-xl">取消</button>
-              </div>
+          {!photo && (
+            <div className="w-full flex justify-center mt-2">
+              <label className="w-full py-2 px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium text-center cursor-pointer">
+                + 上传图片/拍照
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </label>
             </div>
           )}
           {photo && (
-            <div className="mt-2 space-y-2 flex flex-col items-center">
-              <img src={photo} alt="Check-in" className="w-full max-w-xs rounded-xl shadow" style={{maxHeight:140}} />
+            <div className="mt-2 flex flex-col items-center">
+              <img src={photo} alt="Check-in" className="w-full max-w-xs h-28 rounded-xl shadow object-cover" />
               <button
                 onClick={() => setPhoto(null)}
-                className="w-28 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 text-sm font-medium"
-              >重新拍摄</button>
+                className="w-28 mt-2 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 text-sm font-medium"
+              >重新选择</button>
             </div>
           )}
           <canvas ref={canvasRef} className="hidden" />
