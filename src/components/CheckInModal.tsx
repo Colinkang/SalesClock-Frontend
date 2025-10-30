@@ -159,36 +159,31 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-0 sm:p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full max-h-[95vh] flex flex-col overflow-hidden relative">
-        <div className="flex-shrink-0 relative">
-          {/* 地图块 */}
-          <div className="w-full" style={{height:200, minHeight:160}}>
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl max-w-md w-full max-h-[95vh] flex flex-col overflow-y-auto">
+        {/* 打卡大地图和gps位置信息仿钉钉视觉 */}
+        <div className="flex flex-col items-center pt-6 px-6">
+          <div className="w-full rounded-xl overflow-hidden border border-slate-200" style={{height:192,minHeight:160,maxHeight:220}}>
             {gettingLocation || !location ? (
-              <div className="flex items-center h-full text-slate-500 justify-center">
-                <Loader2 className="animate-spin mr-2" size={16} /> 正在获取位置...
-              </div>
+              <div className="flex items-center justify-center h-full text-slate-500"><Loader2 size={18} className="animate-spin mr-2" />正在获取位置...</div>
             ) : (
               <AmapLiveMap lat={location.lat} lng={location.lng} />
             )}
           </div>
-          {/* 关闭按钮浮于右上 */}
-          <button
-            onClick={onClose}
-            className="absolute top-2 right-2 p-2 bg-white rounded-full shadow hover:bg-slate-100 z-10"
-          >
-            <X size={22}/>
-          </button>
+          {location && (
+            <div className="flex items-center w-full mt-4 text-base font-bold text-slate-900">
+              <span className="truncate flex-1">{visit.customers.address || '未知地址'}</span>
+              <MapPin size={20} className="ml-1 text-blue-600 flex-shrink-0" />
+            </div>
+          )}
+          {location && (
+            <div className="w-full text-xs text-slate-400 mt-0.5">
+              {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
+            </div>
+          )}
         </div>
-        {/* 地址行 */}
-        {location && (
-          <div className="flex items-center gap-2 px-6 pt-4 pb-2">
-            <span className="font-bold text-base text-slate-900 flex-1 truncate">{visit.customers.address || '未知地址'}</span>
-            <MapPin size={18} className="text-blue-600" />
-          </div>
-        )}
-        {/* 备注区块 */}
-        <div className="px-6 pt-1 pb-2">
+        {/* 备注、图片、签到按钮区块全部延用原有结构 */}
+        <div className="px-6 pt-4 pb-2">
           <div className="text-slate-700 text-[15px] font-semibold mb-1">备注</div>
           <textarea
             value={notes}
@@ -198,7 +193,6 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
             placeholder="请填写签到备注（可选）"
           />
         </div>
-        {/* 图片区块 */}
         <div className="px-6 pb-1">
           <div className="text-slate-700 text-[15px] font-semibold mb-1">签到图片</div>
           {!photo && !cameraActive && (
@@ -238,7 +232,7 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
           )}
           <canvas ref={canvasRef} className="hidden" />
         </div>
-        {/* 底部橙色圆形签到按钮+时间 */}
+        {/* 底部签到按钮不变 */}
         <div className="flex flex-col items-center my-6">
           <button
             onClick={handleSubmit}
@@ -253,6 +247,13 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
             {curTime.toLocaleDateString('zh-CN')} {visit.customers.name}
           </div>
         </div>
+        {/* 关闭按钮浮于右上 */}
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 p-2 bg-white rounded-full shadow hover:bg-slate-100 z-10"
+        >
+          <X size={22}/>
+        </button>
       </div>
     </div>
   );
