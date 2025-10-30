@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, Camera, MapPin, Loader2 } from 'lucide-react';
 import { visitPlansApi } from '../lib/api';
-import DraggableMap from './DraggableMap';
+import StaticMapAdjust from './StaticMapAdjust';
 
 interface Customer {
   id: string;
@@ -251,13 +251,14 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
                       {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
                     </p>
                   </div>
-                  <DraggableMap
+                  <StaticMapAdjust
                     latitude={location.lat}
                     longitude={location.lng}
                     initialLat={initialLocation.lat}
                     initialLng={initialLocation.lng}
                     onLocationChange={handleLocationChange}
                     maxDistanceMeters={maxDistanceMeters}
+                    addressText={visit.customers.address}
                   />
                 </div>
               ) : (
