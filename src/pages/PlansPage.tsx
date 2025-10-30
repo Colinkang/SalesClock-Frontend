@@ -368,27 +368,7 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
       className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-200"
     >
       <div className="p-5">
-        {/* 小地图区域 */}
-        <div className="mb-2">
-          {visit.customers && visit.customers.latitude != null && visit.customers.longitude != null ? (
-            <AmapLiveMap
-              lat={visit.customers.latitude}
-              lng={visit.customers.longitude}
-              width="100%"
-              height={130}
-            />
-          ) : (
-            <div style={{ width: '100%', height: 130, background: '#f3f4f6', color: '#ccc', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>
-              无定位
-            </div>
-          )}
-        </div>
-        {/* 地址行 */}
-        <div className="flex items-center gap-1 mb-3">
-          <MapPin size={16} className="text-blue-600 flex-shrink-0" />
-          <span className="font-bold text-sm text-slate-900 line-clamp-1">{visit.customers.address || '无地址信息'}</span>
-        </div>
-        {/* 原有内容（客户名/状态/按钮组等） */}
+        {/* 删除地图和定位展示，仅保留客户名、状态、按钮区等 */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-slate-800 mb-1">
