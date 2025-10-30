@@ -43,6 +43,7 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
   useEffect(() => {
     let timer: any;
     if (isOpen) {
+      setLocation(null); // 每次打开强制刷新定位
       getCurrentLocation();
       timer = setInterval(() => setCurTime(new Date()), 1000);
     }
