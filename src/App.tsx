@@ -52,7 +52,7 @@ function App() {
       case 'articles':
         return <ArticlesPage />;
       case 'profile':
-        return <ProfilePage />;
+        return <ProfilePage onLogout={handleLogout} />;
       default:
         return <PlansPage onLogout={handleLogout} />;
     }

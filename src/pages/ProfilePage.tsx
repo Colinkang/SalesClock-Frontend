@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Phone, Clock, Users, TrendingUp, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MapPin, Phone, Clock, Users, TrendingUp, CheckCircle, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 import { visitPlansApi } from '../lib/api';
 
 interface Customer {
@@ -28,7 +28,11 @@ interface VisitStats {
   uniqueCustomers: number;
 }
 
-export default function ProfilePage() {
+interface ProfilePageProps {
+  onLogout?: ()=>void;
+}
+
+export default function ProfilePage({ onLogout }: ProfilePageProps) {
   const [stats, setStats] = useState<VisitStats>({
     totalVisits: 0,
     completedVisits: 0,
@@ -143,10 +147,21 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
-        <div className="px-6 py-5">
-          <h1 className="text-2xl font-bold text-slate-800">我的</h1>
-          <p className="text-sm text-slate-500 mt-1">拜访统计与记录</p>
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm relative">
+        <div className="px-6 py-5 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">我的</h1>
+            <p className="text-sm text-slate-500 mt-1">拜访统计与记录</p>
+          </div>
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+              title="退出登录"
+            >
+              <LogOut size={22} />
+            </button>
+          )}
         </div>
       </header>
 

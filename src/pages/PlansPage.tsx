@@ -533,15 +533,7 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
                 <Plus size={18} />
                 <span className="text-sm font-medium">添加计划</span>
               </button>
-              {onLogout && (
-                <button
-                  onClick={onLogout}
-                  className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                  title="退出登录"
-                >
-                  <LogOut size={20} />
-                </button>
-              )}
+              {/* 退出登录按钮已移除到ProfilePage */}
             </div>
           </div>
         </div>
