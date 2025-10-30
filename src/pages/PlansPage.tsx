@@ -485,24 +485,23 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-slate-800">
-                {currentView === 'day' ? '今日拜访计划' : '月度拜访计划'}
+                {currentView === 'day' ? '今日计划' : '月度计划'}
               </h1>
-              <p className="text-sm text-slate-500 mt-1">
-                {currentView === 'day' ? 
-                  (() => {
-                    const chinaOffset = 8 * 60;
-                    const localOffset = new Date().getTimezoneOffset();
-                    const chinaTime = new Date(new Date().getTime() + (localOffset + chinaOffset) * 60 * 1000);
-                    return chinaTime.toLocaleDateString('zh-CN', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      weekday: 'long',
-                    });
-                  })() :
-                  `${currentDate.getFullYear()}年 ${currentDate.getMonth() + 1}月`
-                }
-              </p>
+              {currentView === 'day' ? (
+                (() => {
+                  const chinaOffset = 8 * 60;
+                  const localOffset = new Date().getTimezoneOffset();
+                  const chinaTime = new Date(new Date().getTime() + (localOffset + chinaOffset) * 60 * 1000);
+                  const dayStr = chinaTime.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'});
+                  const weekStr = chinaTime.toLocaleDateString('zh-CN',{weekday:'long'});
+                  return <>
+                    <div className="text-base text-slate-700 mt-0.5">{dayStr}</div>
+                    <div className="text-xs text-slate-500 mt-0.5" style={{letterSpacing:1}}>{weekStr}</div>
+                  </>;
+                })()
+              ) : (
+                <div className="text-base text-slate-700 mt-1">{currentDate.getFullYear()}年 {currentDate.getMonth() + 1}月</div>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <div className="flex bg-slate-100 rounded-lg p-1">
