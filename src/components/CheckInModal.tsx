@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Camera, MapPin, Loader2 } from 'lucide-react';
+import { X, Camera, MapPin, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { visitPlansApi } from '../lib/api';
 import AmapLiveMap from './AmapLiveMap';
 
@@ -38,6 +38,7 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
   const [cameraActive, setCameraActive] = useState(false);
   const streamRef = useRef<MediaStream | null>(null);
   const [curTime, setCurTime] = useState(new Date());
+  const [toast, setToast] = useState<{ type: 'success'|'error', message: string }|null>(null);
 
   useEffect(() => {
     let timer: any;
@@ -130,13 +131,18 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
     }
   };
 
+  const showToast = (type: 'success'|'error', message: string) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 2000);
+  };
+
   const handleSubmit = async () => {
     if (!location) {
-      alert('请等待获取位置信息');
+      showToast('error','请等待获取位置信息');
       return;
     }
     if (!photo) {
-      alert('请拍摄现场照片');
+      showToast('error','请拍摄现场照片');
       return;
     }
     setLoading(true);
@@ -147,10 +153,13 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
         photoUrl: photo,
         notes: notes
       });
-      onSuccess();
-      onClose();
+      showToast('success','签到成功！');
+      setTimeout(() => {
+        onSuccess();
+        onClose();
+      }, 1000);
     } catch {
-      alert('签到失败，请重试');
+      showToast('error','签到失败，请重试');
     } finally {
       setLoading(false);
     }
@@ -160,7 +169,15 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full max-h-[95vh] flex flex-col overflow-y-auto">
+      <div className="bg-white rounded-2xl max-w-md w-full max-h-[95vh] flex flex-col overflow-y-auto relative">
+        {/* toast提示条浮层 */}
+        {toast && (
+          <div className={`fixed left-1/2 -translate-x-1/2 top-10 px-5 py-2 rounded-lg flex items-center gap-2 text-white z-[100] shadow-xl transition-all ${toast.type==='success'?'bg-emerald-600':'bg-red-500'}`}
+               style={{minWidth:140, maxWidth:'80%', fontSize:'1rem', textAlign:'center'}}>
+            {toast.type==='success'?(<CheckCircle size={20}/>):(<XCircle size={20}/>)}
+            <span>{toast.message}</span>
+          </div>
+        )}
         {/* 打卡大地图和gps位置信息仿钉钉视觉 */}
         <div className="flex flex-col items-center pt-6 px-6">
           <div className="w-full rounded-xl overflow-hidden border border-slate-200" style={{height:192,minHeight:160,maxHeight:220}}>
@@ -240,8 +257,17 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
             className="rounded-full bg-gradient-to-b from-yellow-400 to-orange-400 shadow-lg hover:brightness-105 active:scale-95 transition-all flex flex-col items-center justify-center"
             style={{ width: 120, height: 120 }}
           >
-            <span className="text-white text-lg font-bold">签到</span>
-            <span className="text-white text-base mt-1">{curTime.toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit', second:'2-digit' })}</span>
+            {loading ? (
+              <>
+                <Loader2 className="animate-spin text-white mb-1" size={30} />
+                <span className="text-white text-base mt-0.5">签到中…</span>
+              </>
+            ) : (
+              <>
+                <span className="text-white text-lg font-bold">签到</span>
+                <span className="text-white text-base mt-1">{curTime.toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit', second:'2-digit' })}</span>
+              </>
+            )}
           </button>
           <div className="mt-3 text-slate-500 text-sm select-none">
             {curTime.toLocaleDateString('zh-CN')} {visit.customers.name}
