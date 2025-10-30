@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, Camera, MapPin, Loader2 } from 'lucide-react';
 import { visitPlansApi } from '../lib/api';
-import StaticMapAdjust from './StaticMapAdjust';
+import AmapLiveMap from './AmapLiveMap';
 
 interface Customer {
   id: string;
@@ -28,7 +28,6 @@ interface CheckInModalProps {
 
 export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: CheckInModalProps) {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [initialLocation, setInitialLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [photo, setPhoto] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,14 +37,17 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const streamRef = useRef<MediaStream | null>(null);
-  const maxDistanceMeters = 500;
+  const [curTime, setCurTime] = useState(new Date());
 
   useEffect(() => {
+    let timer: any;
     if (isOpen) {
       getCurrentLocation();
+      timer = setInterval(() => setCurTime(new Date()), 1000);
     }
     return () => {
       stopCamera();
+      if (timer) clearInterval(timer);
     };
   }, [isOpen]);
 
@@ -54,16 +56,10 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const newLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
-          setLocation(newLocation);
-          setInitialLocation(newLocation);
+          setLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
           setGettingLocation(false);
         },
         (error) => {
-          console.error('Error getting location:', error);
           setGettingLocation(false);
           alert('无法获取位置信息，请检查定位权限');
         }
@@ -74,52 +70,15 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
     }
   };
 
-  const handleLocationChange = (lat: number, lng: number) => {
-    setLocation({ lat, lng });
-  };
-
-  const openInSystemMaps = () => {
-    if (!location) return;
-    const { lat, lng } = location;
-    const name = encodeURIComponent(visit.customers.name || '目的地');
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isAndroid = /Android/.test(navigator.userAgent);
-
-    const appleUrl = `https://maps.apple.com/?ll=${lat},${lng}&q=${name}`;
-    const androidGeo = `geo:${lat},${lng}?q=${lat},${lng}(${name})`;
-    const googleWeb = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-
-    if (isIOS) {
-      window.location.href = appleUrl;
-      return;
-    }
-
-    if (isAndroid) {
-      // 优先尝试 geo: 协议，失败时回退到 Google Web
-      try {
-        window.location.href = androidGeo;
-      } catch (_e) {
-        window.open(googleWeb, '_blank');
-      }
-      return;
-    }
-
-    // 其他平台使用 Google Maps Web
-    window.open(googleWeb, '_blank');
-  };
-
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
         setCameraActive(true);
       }
     } catch (error) {
-      console.error('Error accessing camera:', error);
       alert('无法访问相机，请检查相机权限');
     }
   };
@@ -133,7 +92,7 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
   };
 
   const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
+    if (videoRef.current && canvasRef.current && location) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       canvas.width = video.videoWidth;
@@ -145,10 +104,6 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
         const now = new Date();
         const dateStr = now.toLocaleDateString('zh-CN');
         const timeStr = now.toLocaleTimeString('zh-CN');
-        const locationStr = location
-          ? `位置: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`
-          : '';
-
         ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
         ctx.fillRect(0, canvas.height - 100, canvas.width, 100);
         ctx.fillStyle = 'white';
@@ -156,10 +111,9 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
         ctx.fillText(visit.customers.name, 20, canvas.height - 65);
         ctx.font = '16px Arial';
         ctx.fillText(`${dateStr} ${timeStr}`, 20, canvas.height - 40);
-        ctx.fillText(locationStr, 20, canvas.height - 15);
+        ctx.fillText(`位置: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`, 20, canvas.height - 15);
 
-        const photoData = canvas.toDataURL('image/jpeg', 0.8);
-        setPhoto(photoData);
+        setPhoto(canvas.toDataURL('image/jpeg', 0.8));
         stopCamera();
       }
     }
@@ -170,38 +124,7 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const img = new Image();
-        img.onload = () => {
-          if (canvasRef.current) {
-            const canvas = canvasRef.current;
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              ctx.drawImage(img, 0, 0);
-
-              const now = new Date();
-              const dateStr = now.toLocaleDateString('zh-CN');
-              const timeStr = now.toLocaleTimeString('zh-CN');
-              const locationStr = location
-                ? `位置: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`
-                : '';
-
-              ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-              ctx.fillRect(0, canvas.height - 100, canvas.width, 100);
-              ctx.fillStyle = 'white';
-              ctx.font = 'bold 20px Arial';
-              ctx.fillText(visit.customers.name, 20, canvas.height - 65);
-              ctx.font = '16px Arial';
-              ctx.fillText(`${dateStr} ${timeStr}`, 20, canvas.height - 40);
-              ctx.fillText(locationStr, 20, canvas.height - 15);
-
-              const photoData = canvas.toDataURL('image/jpeg', 0.8);
-              setPhoto(photoData);
-            }
-          }
-        };
-        img.src = reader.result as string;
+        setPhoto(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -212,12 +135,10 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
       alert('请等待获取位置信息');
       return;
     }
-
     if (!photo) {
       alert('请拍摄现场照片');
       return;
     }
-
     setLoading(true);
     try {
       await visitPlansApi.checkIn(visit.id, {
@@ -226,11 +147,9 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
         photoUrl: photo,
         notes: notes
       });
-
       onSuccess();
       onClose();
-    } catch (error) {
-      console.error('Error checking in:', error);
+    } catch {
       alert('签到失败，请重试');
     } finally {
       setLoading(false);
@@ -240,178 +159,100 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-          <h2 className="text-xl font-bold text-slate-800">签到</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-0 sm:p-4">
+      <div className="bg-white rounded-2xl max-w-md w-full max-h-[95vh] flex flex-col overflow-hidden relative">
+        <div className="flex-shrink-0 relative">
+          {/* 地图块 */}
+          <div className="w-full" style={{height:200, minHeight:160}}>
+            {gettingLocation || !location ? (
+              <div className="flex items-center h-full text-slate-500 justify-center">
+                <Loader2 className="animate-spin mr-2" size={16} /> 正在获取位置...
+              </div>
+            ) : (
+              <AmapLiveMap lat={location.lat} lng={location.lng} />
+            )}
+          </div>
+          {/* 关闭按钮浮于右上 */}
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+            className="absolute top-2 right-2 p-2 bg-white rounded-full shadow hover:bg-slate-100 z-10"
           >
-            <X size={20} />
+            <X size={22}/>
           </button>
         </div>
-
-        <div className="p-6 space-y-5">
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              拜访客户
-            </label>
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-              <p className="font-medium text-slate-800">{visit.customers.name}</p>
-              <p className="text-sm text-slate-600 mt-1">{visit.customers.address}</p>
+        {/* 地址行 */}
+        {location && (
+          <div className="flex items-center gap-2 px-6 pt-4 pb-2">
+            <span className="font-bold text-base text-slate-900 flex-1 truncate">{visit.customers.address || '未知地址'}</span>
+            <MapPin size={18} className="text-blue-600" />
+          </div>
+        )}
+        {/* 备注区块 */}
+        <div className="px-6 pt-1 pb-2">
+          <div className="text-slate-700 text-[15px] font-semibold mb-1">备注</div>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg resize-none bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            rows={2}
+            placeholder="请填写签到备注（可选）"
+          />
+        </div>
+        {/* 图片区块 */}
+        <div className="px-6 pb-1">
+          <div className="text-slate-700 text-[15px] font-semibold mb-1">签到图片</div>
+          {!photo && !cameraActive && (
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={startCamera}
+                className="flex-1 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 flex items-center justify-center font-medium"
+              >
+                <Camera size={18} className="mr-2"/>相机拍照
+              </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-1 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 font-medium"
+              >
+                + 相册图片
+              </button>
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              GPS位置
-            </label>
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-              {gettingLocation ? (
-                <div className="flex items-center text-slate-600">
-                  <Loader2 size={16} className="animate-spin mr-2" />
-                  <span className="text-sm">正在获取位置...</span>
-                </div>
-              ) : location && initialLocation ? (
-                <div className="space-y-2">
-                  <div className="flex items-start">
-                    <MapPin size={16} className="text-blue-600 mt-0.5 mr-2 flex-shrink-0" />
-                    <p className="text-sm text-slate-700">
-                      {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
-                    </p>
-                  </div>
-                  <StaticMapAdjust
-                    latitude={location.lat}
-                    longitude={location.lng}
-                    initialLat={initialLocation.lat}
-                    initialLng={initialLocation.lng}
-                    onLocationChange={handleLocationChange}
-                    maxDistanceMeters={maxDistanceMeters}
-                    addressText={visit.customers.address}
-                  />
-                  <button
-                    onClick={openInSystemMaps}
-                    className="w-full mt-2 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-sm font-medium transition-colors"
-                  >
-                    在地图中打开（使用系统/浏览器默认）
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={getCurrentLocation}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  点击获取位置
-                </button>
-              )}
+          )}
+          {cameraActive && (
+            <div className="space-y-2 mt-2">
+              <video ref={videoRef} autoPlay playsInline className="w-full rounded-xl bg-black h-36 object-contain" />
+              <div className="flex gap-2">
+                <button onClick={capturePhoto} className="flex-1 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700">拍摄</button>
+                <button onClick={stopCamera} className="flex-1 py-2 bg-slate-200 text-slate-700 rounded-xl">取消</button>
+              </div>
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              签到时间
-            </label>
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-              <p className="text-sm text-slate-700">
-                {new Date().toLocaleString('zh-CN', {
-                  year: 'numeric',
-                  month: '2-digit',
-                  day: '2-digit',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </p>
+          )}
+          {photo && (
+            <div className="mt-2 space-y-2 flex flex-col items-center">
+              <img src={photo} alt="Check-in" className="w-full max-w-xs rounded-xl shadow" style={{maxHeight:140}} />
+              <button
+                onClick={() => setPhoto(null)}
+                className="w-28 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 text-sm font-medium"
+              >重新拍摄</button>
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              现场照片
-            </label>
-            {!photo && !cameraActive && (
-              <div className="space-y-2">
-                <button
-                  onClick={startCamera}
-                  className="w-full py-4 px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium flex items-center justify-center"
-                >
-                  <Camera size={20} className="mr-2" />
-                  打开相机拍照
-                </button>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full py-4 px-4 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors font-medium flex items-center justify-center"
-                >
-                  从相册选择
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-              </div>
-            )}
-            {cameraActive && (
-              <div className="space-y-3">
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  className="w-full rounded-xl bg-black"
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={capturePhoto}
-                    className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
-                  >
-                    拍摄
-                  </button>
-                  <button
-                    onClick={stopCamera}
-                    className="px-4 py-3 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors font-medium"
-                  >
-                    取消
-                  </button>
-                </div>
-              </div>
-            )}
-            {photo && (
-              <div className="space-y-3">
-                <img src={photo} alt="Check-in" className="w-full rounded-xl" />
-                <button
-                  onClick={() => setPhoto(null)}
-                  className="w-full py-2 px-4 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors text-sm font-medium"
-                >
-                  重新拍摄
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              备注（选填）
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="记录签到相关信息..."
-              rows={3}
-              className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-slate-700"
-            />
-          </div>
-
+          )}
+          <canvas ref={canvasRef} className="hidden" />
+        </div>
+        {/* 底部橙色圆形签到按钮+时间 */}
+        <div className="flex flex-col items-center my-6">
           <button
             onClick={handleSubmit}
             disabled={loading || !location || !photo}
-            className="w-full py-4 px-6 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors font-semibold text-lg shadow-lg shadow-blue-600/30 disabled:shadow-none"
+            className="rounded-full bg-gradient-to-b from-yellow-400 to-orange-400 shadow-lg hover:brightness-105 active:scale-95 transition-all flex flex-col items-center justify-center"
+            style={{ width: 120, height: 120 }}
           >
-            {loading ? '签到中...' : '确认签到'}
+            <span className="text-white text-lg font-bold">签到</span>
+            <span className="text-white text-base mt-1">{curTime.toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit', second:'2-digit' })}</span>
           </button>
+          <div className="mt-3 text-slate-500 text-sm select-none">
+            {curTime.toLocaleDateString('zh-CN')} {visit.customers.name}
+          </div>
         </div>
-        <canvas ref={canvasRef} className="hidden" />
       </div>
     </div>
   );
