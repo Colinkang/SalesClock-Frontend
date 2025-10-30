@@ -47,8 +47,7 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [monthVisits, setMonthVisits] = useState<VisitPlan[]>([]);
-  const [navModalOpen, setNavModalOpen] = useState(false);
-  const [navCustomer, setNavCustomer] = useState<Customer | null>(null);
+  // 仅弹窗相关state与方法全部去掉
 
   useEffect(() => {
     loadCustomers();
@@ -202,60 +201,24 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
     window.location.href = `tel:${phone}`;
   };
 
-  const handleNavModal = (customer: Customer) => {
+  // 导航：直接用原生scheme跳转地图App
+  const handleNavigateDirect = (customer: Customer) => {
     if (!customer.latitude && !customer.address) {
       alert('客户位置信息不可用，请先添加地址/坐标');
       return;
     }
-    setNavCustomer(customer);
-    setNavModalOpen(true);
-  };
-
-  const getMapUrls = (customer: Customer) => {
     const name = encodeURIComponent(customer.name || '目的地');
-    const hasCoords = !!(customer.latitude && customer.longitude);
-    if (hasCoords) {
-      const lat = customer.latitude as number;
-      const lng = customer.longitude as number;
-      return {
-        amap: {
-          scheme: `amapuri://route/plan/?dlat=${lat}&dlon=${lng}&dname=${name}&dev=0&t=0`,
-          web: `https://uri.amap.com/navigation?to=${lng},${lat},${name}&mode=car&src=myapp`,
-        },
-        baidu: {
-          scheme: `baidumap://map/direction?destination=name:${name}|latlng:${lat},${lng}&mode=driving`,
-          web: `https://api.map.baidu.com/direction?destination=${lat},${lng}&mode=driving&output=html`,
-        },
-        google: {
-          scheme: `geo:${lat},${lng}?q=${lat},${lng}(${name})`,
-          web: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`,
-        },
-        apple: {
-          scheme: `maps://?daddr=${lat},${lng}`,
-          web: `https://maps.apple.com/?daddr=${lat},${lng}&q=${name}`,
-        },
-      };
+    let scheme = '';
+    if (customer.latitude && customer.longitude) {
+      // 兼容优先级：高德 > 百度 > 苹果 > geo(Android)
+      // 高德
+      scheme = `amapuri://route/plan/?dlat=${customer.latitude}&dlon=${customer.longitude}&dname=${name}&dev=0&t=0`;
+    } else if (customer.address) {
+      // 若无坐标用高德Web（不再弹窗选择map）
+      scheme = `https://uri.amap.com/search?query=${encodeURIComponent(customer.address)}&src=myapp`;
     }
-    const addr = encodeURIComponent(customer.address as string);
-    return {
-      amap: { scheme: '', web: `https://uri.amap.com/search?query=${addr}&src=myapp` },
-      baidu: { scheme:'', web: `https://api.map.baidu.com/geocoder?address=${addr}&output=html` },
-      google: { scheme:'', web: `https://www.google.com/maps/dir/?api=1&destination=${addr}&travelmode=driving` },
-      apple: { scheme:'', web: `https://maps.apple.com/?daddr=${addr}&q=${name}` },
-    };
-  };
-
-  // 新方法，优先尝试scheme，失败则fallback
-  const startMapApp = (option:{scheme:string, web:string}) => {
-    if (option.scheme) {
-      window.location.href = option.scheme;
-      setTimeout(() => {
-        window.location.href = option.web;
-      }, 800);
-    } else {
-      window.location.href = option.web;
-    }
-    setNavModalOpen(false);
+    // 直接跳转
+    window.location.href = scheme;
   };
 
   const handleWriteReport = (visit: VisitPlan) => {
@@ -434,7 +397,7 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
           </button>
 
           <button
-            onClick={() => handleNavModal(visit.customers)}
+            onClick={() => handleNavigateDirect(visit.customers)}
             className="flex flex-col items-center justify-center py-3 px-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 active:scale-95 transition-all duration-200"
           >
             <Navigation size={20} strokeWidth={2} />
@@ -677,30 +640,6 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
             }}
           />
         </>
-      )}
-
-      {navModalOpen && navCustomer && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-xs w-full flex flex-col items-center">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 w-full">
-              <span className="text-lg font-bold text-slate-800">选择地图</span>
-              <button onClick={()=>setNavModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full"><X size={20}/></button>
-            </div>
-            <div className="py-4 w-full flex flex-col items-center gap-3">
-              {(() => {
-                const urls = getMapUrls(navCustomer);
-                return (
-                  <>
-                  <button onClick={()=>startMapApp(urls.amap)} className="w-[80%] py-3 rounded-xl bg-blue-600 text-white text-lg font-semibold hover:bg-blue-700">高德地图</button>
-                  <button onClick={()=>startMapApp(urls.baidu)} className="w-[80%] py-3 rounded-xl bg-yellow-500 text-white text-lg font-semibold hover:bg-yellow-600">百度地图</button>
-                  <button onClick={()=>startMapApp(urls.google)} className="w-[80%] py-3 rounded-xl bg-slate-800 text-white text-lg font-semibold hover:bg-slate-900">Google地图</button>
-                  <button onClick={()=>startMapApp(urls.apple)} className="w-[80%] py-3 rounded-xl bg-slate-100 text-slate-800 border border-slate-200 text-lg font-semibold hover:bg-slate-200">Apple地图</button>
-                  </>
-                );
-              })()}
-            </div>
-          </div>
-        </div>
       )}
 
       {/* 添加计划模态框 */}
