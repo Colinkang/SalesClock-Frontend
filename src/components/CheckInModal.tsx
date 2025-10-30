@@ -78,6 +78,36 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
     setLocation({ lat, lng });
   };
 
+  const openInSystemMaps = () => {
+    if (!location) return;
+    const { lat, lng } = location;
+    const name = encodeURIComponent(visit.customers.name || '目的地');
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+
+    const appleUrl = `https://maps.apple.com/?ll=${lat},${lng}&q=${name}`;
+    const androidGeo = `geo:${lat},${lng}?q=${lat},${lng}(${name})`;
+    const googleWeb = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+
+    if (isIOS) {
+      window.location.href = appleUrl;
+      return;
+    }
+
+    if (isAndroid) {
+      // 优先尝试 geo: 协议，失败时回退到 Google Web
+      try {
+        window.location.href = androidGeo;
+      } catch (_e) {
+        window.open(googleWeb, '_blank');
+      }
+      return;
+    }
+
+    // 其他平台使用 Google Maps Web
+    window.open(googleWeb, '_blank');
+  };
+
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -260,6 +290,12 @@ export default function CheckInModal({ isOpen, onClose, visit, onSuccess }: Chec
                     maxDistanceMeters={maxDistanceMeters}
                     addressText={visit.customers.address}
                   />
+                  <button
+                    onClick={openInSystemMaps}
+                    className="w-full mt-2 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-sm font-medium transition-colors"
+                  >
+                    在地图中打开（使用系统/浏览器默认）
+                  </button>
                 </div>
               ) : (
                 <button
