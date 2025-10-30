@@ -709,59 +709,62 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
       {/* 添加计划模态框 */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
-              <h2 className="text-xl font-bold text-slate-800">添加拜访计划</h2>
+          <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto flex flex-col items-center justify-center">
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10 w-full">
+              <h2 className="text-xl font-bold text-slate-800 text-center w-full">添加计划</h2>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors absolute right-4 top-4"
               >
                 <X size={20} />
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+            <div className="py-8 w-full flex flex-col items-center">
+              <div className="mb-5 w-full flex flex-col items-center">
+                <label className="block text-[1.15rem] font-bold text-slate-700 mb-3 text-center">
                   选择客户 <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={newPlan.customer_id}
                   onChange={(e) => setNewPlan({ ...newPlan, customer_id: e.target.value })}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-[90%] min-h-[48px] text-lg px-4 py-3 border border-slate-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors mb-2 text-center"
+                  style={{margin:'0 auto'}}
                 >
                   <option value="">请选择客户</option>
                   {customers.map((customer) => (
-                    <option key={customer.id} value={customer.id}>
+                    <option key={customer.id} value={customer.id} className="text-center">
                       {customer.name} - {customer.phone}
                     </option>
                   ))}
                 </select>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+              <div className="mb-6 w-full flex flex-col items-center">
+                <label className="block text-[1.15rem] font-bold text-slate-700 mb-3 text-center">
                   计划日期 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
                   value={newPlan.planned_date}
                   onChange={(e) => setNewPlan({ ...newPlan, planned_date: e.target.value })}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-[90%] min-h-[48px] text-lg px-4 py-3 border border-slate-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-center"
+                  style={{margin:'0 auto'}}
                 />
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 w-[90%] pt-3 justify-center">
                 <button
                   onClick={() => setShowAddModal(false)}
-                  className="flex-1 px-4 py-3 border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors"
+                  className="flex-1 px-4 py-3 border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors text-lg"
+                  style={{minWidth:'40%'}}
                 >
                   取消
                 </button>
                 <button
                   onClick={handleAddPlan}
                   disabled={addLoading}
-                  className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl transition-colors flex items-center justify-center gap-2 text-lg"
+                  style={{minWidth:'40%'}}
                 >
                   {addLoading ? (
                     <>
