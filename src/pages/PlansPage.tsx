@@ -248,13 +248,12 @@ export default function PlansPage({ onLogout }: PlansPageProps) {
   // 新方法，优先尝试scheme，失败则fallback
   const startMapApp = (option:{scheme:string, web:string}) => {
     if (option.scheme) {
-      // 先尝试scheme
       window.location.href = option.scheme;
       setTimeout(() => {
-        window.open(option.web,"_blank");
-      }, 800); // 部分webview成功跳app会自动cancel setTimeout
+        window.location.href = option.web;
+      }, 800);
     } else {
-      window.open(option.web, "_blank");
+      window.location.href = option.web;
     }
     setNavModalOpen(false);
   };
